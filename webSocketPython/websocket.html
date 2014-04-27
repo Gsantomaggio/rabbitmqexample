@@ -1,0 +1,46 @@
+<html>
+<head>
+	<script src="//code.jquery.com/jquery-1.11.0.min.js"></script>
+	<script>
+	
+    $(document).ready(function() {
+	  var ws;
+	   if ('WebSocket' in window) {
+		   ws = new WebSocket('ws://localhost:8888/ws');
+	    }
+	    else if ('MozWebSocket' in window) {
+	    	ws = new MozWebSocket('ws://localhost:8888/ws');
+	    }
+	    else {
+	    	 
+	    	  alert("<tr><td> your browser doesn't support web socket </td></tr>");
+	    	
+	        return;
+	    }
+	  
+	  ws.onopen = function(evt) { 
+	  	$("#idlogs").append("Connection open ...\n")
+	  };
+	  
+	  ws.onmessage = function(evt){
+	    $("#idlogs").append(" New message..." + evt.data + '\n')
+	  };
+	  
+	  function closeConnect(){
+	      ws.close();
+	  }
+	    
+  
+  });
+	</script>
+	
+</head>
+
+<body>
+<textarea id="idlogs" cols='60' rows='8'>...</textarea>
+
+</body>
+
+<html>
+
+
