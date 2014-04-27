@@ -1,0 +1,4 @@
+rabbitmqexample
+===============
+
+Just some example...
