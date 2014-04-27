@@ -1,4 +1,10 @@
 #!/usr/bin/env python
+
+# How to send an web socket message using http://www.tornadoweb.org/.
+# to get ready you have to install pika and tornado
+# 1. pip install pika
+# 2. pip install tornado
+
 import os
 import tornado.ioloop
 import tornado.web
@@ -8,7 +14,9 @@ from threading import Thread
 import logging
 logging.basicConfig()
 
+# web socket clients connected.
 clients = []
+
 connection = pika.BlockingConnection()
 print 'Connected:localhost'
 channel = connection.channel()
@@ -28,6 +36,7 @@ def disconnect_to_rabbitmq():
 	
 def consumer_callback(ch, method, properties, body):
 		print " [x] Received %r" % (body,)
+		# The messagge is brodcast to the connected clients
 		for itm in clients:
 			itm.write_message(body)
 
@@ -43,7 +52,6 @@ class SocketHandler(tornado.websocket.WebSocketHandler):
 
 class MainHandler(tornado.web.RequestHandler):
     def get(self):
-    	print 'get page'
         self.render("websocket.html")
 	
 
@@ -60,8 +68,11 @@ def stopTornado():
     tornado.ioloop.IOLoop.instance().stop()
 
 if __name__ == "__main__":
+	print "Starting thread RabbitMQ "
 	threadRMQ = Thread(target=threaded_rmq)
 	threadRMQ.start()
+
+   	print "Starting thread Tornado"
 
    	threadTornado = Thread(target=startTornado)
    	threadTornado.start()
@@ -70,11 +81,12 @@ if __name__ == "__main__":
 	except SyntaxError:
 		pass
 	try:
+		print "Disconnecting from RabbitMQ.."
 		disconnect_to_rabbitmq()
 	except Exception, e:
 		pass
 	stopTornado(); 
 	
-	print 'end'
+	print 'See you...'
 	
 	
