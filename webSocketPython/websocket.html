@@ -4,12 +4,19 @@
 	<script>
 	
     $(document).ready(function() {
-	  var ws;
+	    var uri= window.location.host + window.location.pathname + 'ws'
+		if (window.location.protocol === 'http:') {
+    		new_uri = "ws:"+uri;
+		 } else {
+    		new_uri = "wss:"+uri;
+		}
+		
+	   var ws;
 	   if ('WebSocket' in window) {
-		   ws = new WebSocket('ws://localhost:8888/ws');
+		   ws = new WebSocket(new_uri);
 	    }
 	    else if ('MozWebSocket' in window) {
-	    	ws = new MozWebSocket('ws://localhost:8888/ws');
+	    	ws = new MozWebSocket(new_uri);
 	    }
 	    else {
 	    	 
