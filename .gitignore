@@ -3,6 +3,8 @@ __pycache__/
 *.py[cod]
 
 .DS_Store
+.idea/
+*.iml
 # C extensions
 *.so
 

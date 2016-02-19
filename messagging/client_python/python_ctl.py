@@ -1,6 +1,9 @@
+# /bin/python
 import pika
 from threading import Thread
-import os, sys
+import os
+import sys
+import time
 
 TEAM_EXCHANGE_NAME = "my_company"
 ROOMS = ["tech.code", "tech.network", "marketing"]
@@ -37,8 +40,10 @@ def threaded_rmq(user_name, consume_channel, routing_keys):
 
 
 def on_message(ch, method, properties, body):
-    consoleInfo.messages.append("| " + str(method.exchange) +" | " + str(method.routing_key) + " |  "+ body)
-
+    is_private = 'Yes' if method.routing_key == consoleInfo.user_name else 'No'
+    msg = "%s - %s - %s    - %s - %s" % (
+        str(method.exchange), str(method.routing_key), is_private, body, properties.headers)
+    consoleInfo.messages.append(msg)
     print_console()
 
 
@@ -54,16 +59,16 @@ def print_console():
     print ""
     print "Team " + TEAM_EXCHANGE_NAME + " - Rooms: " + str(ROOMS)
     print ""
-    print "Joined in : " + str(consoleInfo.routing_keys)
+    print "Joined to : " + str(consoleInfo.routing_keys)
     print ""
-    print "**** Messages Received *******"
+    print "==================== Messages Received ======================================="
     print ""
-    print "Exchange  -   Routing Key  -  Body "
-   
+    print "Exchange    Routing Key  Priv.  Body - Message Header"
+    print "------------------------------------------------------------------------------"
     for message in consoleInfo.messages:
         print message
     print ""
-    print "****************************"
+    print "=============================================================================="
     print "* press q for terminate \n* return to send a message \n"
 
 
@@ -84,14 +89,30 @@ def main(host, user, password):
                               consoleInfo.routing_keys)
     publish_channel = connection.channel()
     while raw_input() != "q":
-        message_to_send = raw_input("Message to send: \n")
+        headers = {
+            'sender_user': consoleInfo.user_name,
+            'created': int(time.time())
+        }
 
-        for routing_key in consoleInfo.routing_keys:
-            if raw_input("send to " + routing_key + " ?") == "y":
-                publish_channel.publish(exchange=TEAM_EXCHANGE_NAME,
-                                        routing_key=routing_key,
-                                        body=message_to_send)
-                break
+        properties = pika.BasicProperties(
+                headers=headers
+        )
+        message_to_send = raw_input("Message to send: \n")
+        sent = False
+        if raw_input("private message ?") == "y":
+            to = raw_input("user: \n")
+            publish_channel.publish(exchange=TEAM_EXCHANGE_NAME, routing_key=to, properties=properties,
+                                    body=message_to_send)
+            pass
+        else:
+            for routing_key in consoleInfo.routing_keys:
+                if raw_input("send to " + routing_key + " ?") == "y":
+                    publish_channel.publish(exchange=TEAM_EXCHANGE_NAME, routing_key=routing_key, properties=properties,
+                                            body=message_to_send)
+                    sent = True
+                    break
+        if not sent:
+            print_console()
 
     def kill():
         channel.stop_consuming()
