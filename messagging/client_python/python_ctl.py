@@ -3,7 +3,7 @@ import pika
 from threading import Thread
 import os
 import sys
-import time
+import datetime
 
 TEAM_EXCHANGE_NAME = "my_company"
 ROOMS = ["tech.code", "tech.network", "marketing"]
@@ -69,46 +69,58 @@ def print_console():
         print message
     print ""
     print "=============================================================================="
-    print "* press q for terminate \n* return to send a message \n"
+    print "- press q to terminate \n- return to send a message \n"
 
 
-def main(host, user, password):
+def publish_message(channel, routing_key, message):
+    t = datetime.datetime.now()
+
+    headers = {
+        'sender_user': consoleInfo.user_name,
+        'sent': t.strftime('%m/%d/%Y %H:%M:%S')
+    }
+
+    properties = pika.BasicProperties(
+            headers=headers
+    )
+    channel.publish(exchange=TEAM_EXCHANGE_NAME, routing_key=routing_key, properties=properties,
+                    body=message)
+
+
+def main(host, port, user, password):
     print "Welcome to " + TEAM_EXCHANGE_NAME + " - Rooms: " + str(ROOMS)
     print ""
+
     consoleInfo.user_name = raw_input("Insert username: \n")
     for room in ROOMS:
         if raw_input("join to " + room + "? y/n \n") == "y":
             consoleInfo.routing_keys.append(room)
 
+    # setup rabbitmq connection
     credentials = pika.PlainCredentials(user, password)
-    connection = pika.BlockingConnection(pika.ConnectionParameters(host, 5672, "/", credentials))
+    connection = pika.BlockingConnection(pika.ConnectionParameters(host, port, "/", credentials))
 
-    print_console()
+    # start subscriber
     channel = connection.channel()
+
     start_rabbitmq_subscriber(channel, consoleInfo.user_name,
                               consoleInfo.routing_keys)
-    publish_channel = connection.channel()
-    while raw_input() != "q":
-        headers = {
-            'sender_user': consoleInfo.user_name,
-            'created': int(time.time())
-        }
 
-        properties = pika.BasicProperties(
-                headers=headers
-        )
+    publish_channel = connection.channel()
+
+    print_console()
+    while raw_input() != "q":
+
         message_to_send = raw_input("Message to send: \n")
         sent = False
         if raw_input("private message ?") == "y":
             to = raw_input("user: \n")
-            publish_channel.publish(exchange=TEAM_EXCHANGE_NAME, routing_key=to, properties=properties,
-                                    body=message_to_send)
+            publish_message(publish_channel, to, message_to_send)
             pass
         else:
             for routing_key in consoleInfo.routing_keys:
                 if raw_input("send to " + routing_key + " ?") == "y":
-                    publish_channel.publish(exchange=TEAM_EXCHANGE_NAME, routing_key=routing_key, properties=properties,
-                                            body=message_to_send)
+                    publish_message(publish_channel, routing_key, message_to_send)
                     sent = True
                     break
         if not sent:
@@ -124,6 +136,7 @@ def main(host, user, password):
 if __name__ == "__main__":
     print 'Argument List:', str(sys.argv)
     rabbitmq_host = sys.argv[1];
-    rabbitmq_user = sys.argv[2];
-    rabbitmq_password = sys.argv[3];
-    main(rabbitmq_host, rabbitmq_user, rabbitmq_password)
+    rabbitmq_port = int(sys.argv[2]);
+    rabbitmq_user = sys.argv[3];
+    rabbitmq_password = sys.argv[4];
+    main(rabbitmq_host, rabbitmq_port, rabbitmq_user, rabbitmq_password)
