@@ -1,0 +1,54 @@
+<html>
+<head>
+    <script src="static/js/jquery-1.12.0.min.js"></script>
+    <script type="text/javascript">
+
+    $(document).ready(function() {
+	    var uri= window.location.host + window.location.pathname + 'ws'
+		if (window.location.protocol === 'http:') {
+    		new_uri = "ws:"+uri;
+		 } else {
+    		new_uri = "wss:"+uri;
+		}
+
+	   var ws;
+	   if ('WebSocket' in window) {
+		   ws = new WebSocket(new_uri);
+	    }
+	    else if ('MozWebSocket' in window) {
+	    	ws = new MozWebSocket(new_uri);
+	    }
+	    else {
+
+	    	  alert("<tr><td> your browser doesn't support web socket </td></tr>");
+
+	        return;
+	    }
+
+	  ws.onopen = function(evt) {
+	  	$("#idlogs").append("Connection open ...\n")
+	  };
+
+	  ws.onmessage = function(evt){
+	    $("#idlogs").append(evt.data + '\n')
+	  };
+
+	  function closeConnect(){
+	      ws.close();
+	  }
+
+
+  });
+	</script>
+
+</head>
+
+<body>
+Web-socket by Tornado
+
+<textarea id="idlogs" cols='120' rows='20'>...</textarea>
+
+</body>
+
+<html>
+

@@ -6,7 +6,7 @@ import sys
 import datetime
 
 TEAM_EXCHANGE_NAME = "my_company"
-ROOMS = ["tech.code", "tech.network", "marketing"]
+ROOMS = ["tech.programming", "tech.networking", "marketing"]
 
 
 def cls():
@@ -40,9 +40,8 @@ def threaded_rmq(user_name, consume_channel, routing_keys):
 
 
 def on_message(ch, method, properties, body):
-    is_private = 'Yes' if method.routing_key == consoleInfo.user_name else 'No'
-    msg = "%s - %s - %s    - %s - %s" % (
-        str(method.exchange), str(method.routing_key), is_private, body, properties.headers)
+    msg = "%s - %s - %s   - %s" % (
+        str(method.exchange), str(method.routing_key), body, properties.headers)
     consoleInfo.messages.append(msg)
     print_console()
 
@@ -63,7 +62,7 @@ def print_console():
     print ""
     print "==================== Messages Received ======================================="
     print ""
-    print "Exchange    Routing Key  Priv.  Body - Message Header"
+    print "Exchange    Routing Key    Body   Message Header"
     print "------------------------------------------------------------------------------"
     for message in consoleInfo.messages:
         print message
@@ -72,12 +71,13 @@ def print_console():
     print "- press q to terminate \n- return to send a message \n"
 
 
-def publish_message(channel, routing_key, message):
+def publish_message(channel, routing_key, message, is_private):
     t = datetime.datetime.now()
 
     headers = {
         'sender_user': consoleInfo.user_name,
-        'sent': t.strftime('%m/%d/%Y %H:%M:%S')
+        'sent': t.strftime('%m/%d/%Y %H:%M:%S'),
+        'is_private': is_private
     }
 
     properties = pika.BasicProperties(
@@ -100,9 +100,9 @@ def main(host, port, user, password):
     credentials = pika.PlainCredentials(user, password)
     connection = pika.BlockingConnection(pika.ConnectionParameters(host, port, "/", credentials))
 
-    # start subscriber
     channel = connection.channel()
-
+    channel.exchange_declare(exchange=TEAM_EXCHANGE_NAME, exchange_type="topic")
+    # start subscriber
     start_rabbitmq_subscriber(channel, consoleInfo.user_name,
                               consoleInfo.routing_keys)
 
@@ -115,12 +115,12 @@ def main(host, port, user, password):
         sent = False
         if raw_input("private message ?") == "y":
             to = raw_input("user: \n")
-            publish_message(publish_channel, to, message_to_send)
+            publish_message(publish_channel, to, message_to_send, True)
             pass
         else:
             for routing_key in consoleInfo.routing_keys:
                 if raw_input("send to " + routing_key + " ?") == "y":
-                    publish_message(publish_channel, routing_key, message_to_send)
+                    publish_message(publish_channel, routing_key, message_to_send, False)
                     sent = True
                     break
         if not sent:
