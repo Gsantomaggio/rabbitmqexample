@@ -18,9 +18,10 @@ class ConsoleInfo:
         self.user_name = ""
         self.messages = []
         self.routing_keys = []
+        self.broker_info = ""
 
 
-consoleInfo = ConsoleInfo()
+console_info = ConsoleInfo()
 
 
 def threaded_rmq(user_name, consume_channel, routing_keys):
@@ -42,7 +43,7 @@ def threaded_rmq(user_name, consume_channel, routing_keys):
 def on_message(ch, method, properties, body):
     msg = "%s - %s - %s   - %s" % (
         str(method.exchange), str(method.routing_key), body, properties.headers)
-    consoleInfo.messages.append(msg)
+    console_info.messages.append(msg)
     print_console()
 
 
@@ -54,17 +55,19 @@ def start_rabbitmq_subscriber(channel, input_user_name, routing_keys):
 
 def print_console():
     cls()
-    print "User name: " + consoleInfo.user_name
+    print "Server:" + console_info.broker_info
+    print ""
+    print "User name: " + console_info.user_name
     print ""
     print "Team " + TEAM_EXCHANGE_NAME + " - Rooms: " + str(ROOMS)
     print ""
-    print "Joined to : " + str(consoleInfo.routing_keys)
+    print "Joined to : " + str(console_info.routing_keys)
     print ""
     print "==================== Messages Received ======================================="
     print ""
     print "Exchange    Routing Key    Body   Message Header"
     print "------------------------------------------------------------------------------"
-    for message in consoleInfo.messages:
+    for message in console_info.messages:
         print message
     print ""
     print "=============================================================================="
@@ -73,9 +76,8 @@ def print_console():
 
 def publish_message(channel, routing_key, message, is_private):
     t = datetime.datetime.now()
-
     headers = {
-        'sender_user': consoleInfo.user_name,
+        'sender_user': console_info.user_name,
         'sent': t.strftime('%m/%d/%Y %H:%M:%S'),
         'is_private': is_private
     }
@@ -87,24 +89,25 @@ def publish_message(channel, routing_key, message, is_private):
                     body=message)
 
 
-def main(host, port, user, password):
+def main(host, port, user, password, vhost):
     print "Welcome to " + TEAM_EXCHANGE_NAME + " - Rooms: " + str(ROOMS)
     print ""
 
-    consoleInfo.user_name = raw_input("Insert username: \n")
+    console_info.broker_info = host
+    console_info.user_name = raw_input("Insert username: \n")
     for room in ROOMS:
         if raw_input("join to " + room + "? y/n \n") == "y":
-            consoleInfo.routing_keys.append(room)
+            console_info.routing_keys.append(room)
 
     # setup rabbitmq connection
     credentials = pika.PlainCredentials(user, password)
-    connection = pika.BlockingConnection(pika.ConnectionParameters(host, port, "/", credentials))
+    connection = pika.BlockingConnection(pika.ConnectionParameters(host, port, vhost, credentials))
 
     channel = connection.channel()
     channel.exchange_declare(exchange=TEAM_EXCHANGE_NAME, exchange_type="topic")
     # start subscriber
-    start_rabbitmq_subscriber(channel, consoleInfo.user_name,
-                              consoleInfo.routing_keys)
+    start_rabbitmq_subscriber(channel, console_info.user_name,
+                              console_info.routing_keys)
 
     publish_channel = connection.channel()
 
@@ -118,7 +121,7 @@ def main(host, port, user, password):
             publish_message(publish_channel, to, message_to_send, True)
             pass
         else:
-            for routing_key in consoleInfo.routing_keys:
+            for routing_key in console_info.routing_keys:
                 if raw_input("send to " + routing_key + " ?") == "y":
                     publish_message(publish_channel, routing_key, message_to_send, False)
                     sent = True
@@ -139,4 +142,5 @@ if __name__ == "__main__":
     rabbitmq_port = int(sys.argv[2]);
     rabbitmq_user = sys.argv[3];
     rabbitmq_password = sys.argv[4];
-    main(rabbitmq_host, rabbitmq_port, rabbitmq_user, rabbitmq_password)
+    rabbitmq_vhost = sys.argv[5];
+    main(rabbitmq_host, rabbitmq_port, rabbitmq_user, rabbitmq_password, rabbitmq_vhost)
