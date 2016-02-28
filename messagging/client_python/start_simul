@@ -1,0 +1,1 @@
+python simul.py localhost 5672 guest guest /
