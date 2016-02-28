@@ -80,10 +80,12 @@ def publish_message(channel, routing_key, message, is_private):
         'sender_user': console_info.user_name,
         'sent': t.strftime('%m/%d/%Y %H:%M:%S'),
         'is_private': is_private
+
     }
 
     properties = pika.BasicProperties(
-            headers=headers
+            headers=headers,
+            delivery_mode=2
     )
     channel.publish(exchange=TEAM_EXCHANGE_NAME, routing_key=routing_key, properties=properties,
                     body=message)
