@@ -93,7 +93,7 @@ public class StoreServer {
     public void start_server() throws Exception {
         final String exchange_name = "my_company";
         final Channel channel = connection.createChannel();
-        channel.exchangeDeclare(exchange_name, "topic");
+        channel.exchangeDeclare(exchange_name, "topic", true);
 
         final String store_messages_queue = "store.messages";
         channel.queueDeclare(store_messages_queue, true, false, false, null);

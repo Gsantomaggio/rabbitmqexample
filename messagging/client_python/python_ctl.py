@@ -106,7 +106,7 @@ def main(host, port, user, password, vhost):
     connection = pika.BlockingConnection(pika.ConnectionParameters(host, port, vhost, credentials))
 
     channel = connection.channel()
-    channel.exchange_declare(exchange=TEAM_EXCHANGE_NAME, exchange_type="topic")
+    channel.exchange_declare(exchange=TEAM_EXCHANGE_NAME, exchange_type="topic", durable=True)
     # start subscriber
     start_rabbitmq_subscriber(channel, console_info.user_name,
                               console_info.routing_keys)

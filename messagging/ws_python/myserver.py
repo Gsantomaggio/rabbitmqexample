@@ -24,7 +24,7 @@ channel = connection.channel()
 
 
 def threaded_rmq():
-    channel.exchange_declare(exchange=TEAM_EXCHANGE_NAME, exchange_type="topic")
+    channel.exchange_declare(exchange=TEAM_EXCHANGE_NAME, exchange_type="topic", durable=True)
     q_declare = channel.queue_declare(exclusive=True, auto_delete=True)
     channel.queue_bind(exchange=TEAM_EXCHANGE_NAME,
                        queue=q_declare.method.queue,
