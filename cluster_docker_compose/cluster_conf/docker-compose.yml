@@ -14,12 +14,15 @@ services:
     volumes:
       - rabbit1:/var/lib/rabbitmq
       - ./conf/:/etc/rabbitmq/
+    command:  bash -c "sleep 10; rabbitmq-server; rabbitmqctl wait /var/lib/rabbitmq/mnesia/rabbit_node_1.pid"
   rabbit_node_2:
     environment:
       - RABBITMQ_ERLANG_COOKIE='secret_cookie'
     networks:
       - back
     hostname: rabbit_node_2
+    depends_on:
+      - rabbit_node_1
     image: "rabbitmq:3-management"
     ports:
       - "15673:15672"
@@ -28,7 +31,7 @@ services:
     volumes:
       - rabbit2:/var/lib/rabbitmq
       - ./conf/:/etc/rabbitmq/
-
+    command:  bash -c "sleep 10; rabbitmq-server; rabbitmqctl wait /var/lib/rabbitmq/mnesia/rabbit_node_2.pid "
 volumes:
   rabbit1:
     driver: local
