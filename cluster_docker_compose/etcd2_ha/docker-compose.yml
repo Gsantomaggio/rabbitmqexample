@@ -3,7 +3,7 @@ services:
    rabbit:
     environment:
       - RABBITMQ_ERLANG_COOKIE='secret_cookie'
-      - TCP_PORTS=15672
+      - TCP_PORTS=15672, 5672
     networks:
       - back
     image: gsantomaggio/rabbitmq-autocluster
