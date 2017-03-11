@@ -1,4 +1,10 @@
-RabbitMQ cluster using [Docker compose](https://docs.docker.com/compose/), [etcd2](https://github.com/coreos/etcd) as back-end and HA proxy
+RabbitMQ cluster using:
+
+1. [Docker compose](https://docs.docker.com/compose/) 
+
+2. [etcd2](https://github.com/coreos/etcd) as back-end  
+
+3. [HA proxy](https://github.com/docker/dockercloud-haproxy)
 
 ```
 git clone https://github.com/Gsantomaggio/rabbitmqexample.git .
@@ -7,5 +13,4 @@ docker-compose up
 docker-compose scale rabbit=3
 ```
 
-It creates a cluster with 2 nodes and the UI enabled. 
-you can customize the `rabbitmq.config` inside `conf/rabbitmq.config`
+You can customize the `rabbitmq.config` inside `conf/rabbitmq.config`
