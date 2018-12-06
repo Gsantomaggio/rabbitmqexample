@@ -1,0 +1,13 @@
+#!/bin/bash
+
+
+
+for i in {1..5000}; do 
+
+echo $1
+curl -u guest:guest -H "content-type:application/json" -X POST -d'{"properties":{"delivery_mode":2},"routing_key":$1,"payload":"HI","payload_encoding":"string"}' http://localhost:15672/api/exchanges/%2f/amq.default/publish;
+
+sleep 0.2
+
+done
+
